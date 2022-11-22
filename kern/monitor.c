@@ -10,6 +10,7 @@
 #include <kern/console.h>
 #include <kern/monitor.h>
 #include <kern/kdebug.h>
+#include <kern/pmap.h>
 
 #define CMDBUF_SIZE	80	// enough for one VGA text line
 
@@ -25,6 +26,8 @@ static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
 	{ "traceback", "traceback info", mon_backtrace },
+	{ "showmappings", "Show physical page mappings", mon_showmappings },
+	{ "memdump", "Dump memory contents", mon_memdump },
 };
 
 /***** Implementations of basic kernel monitor commands *****/
@@ -72,6 +75,92 @@ mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 	return 0;
 }
 
+int
+mon_showmappings(int argc, char** argv, struct Trapframe* tf) {
+	uint32_t begin = strtol(argv[1], NULL, 16);
+	uint32_t end = strtol(argv[2], NULL, 16);
+	begin = ROUNDDOWN(begin, PGSIZE);
+	end = ROUNDDOWN(end, PGSIZE);
+	cprintf("Show memory mappings: [%08p - %08p]\n", begin, end);
+	for (uint32_t i = begin; i <= end; i += PGSIZE) {
+		pte_t* pte;
+		struct PageInfo* pp = page_lookup(kern_pgdir, (void*)i, &pte);
+		if (!pp) {
+			cprintf("  [%05p] ->\n", PGNUM(i));
+			continue;
+		}
+		// virtual page, physical page, perm, refcnt
+		cprintf("  [%05p] -> [%05p] %c%c%c%c%c%c%c%c%c  *%d\n",
+			PGNUM(i),
+			PGNUM(page2pa(pp)),
+			*pte & PTE_G ? 'G' : '-',
+			*pte & PTE_PS ? 'S' : '-',
+			*pte & PTE_D ? 'D' : '-',
+			*pte & PTE_A ? 'A' : '-',
+			*pte & PTE_PCD ? 'C' : '-',
+			*pte & PTE_PWT ? 'T' : '-',
+			*pte & PTE_U ? 'U' : '-',
+			*pte & PTE_W ? 'W' : '-',
+			*pte & PTE_P ? 'P' : '-',
+			pp->pp_ref
+		);
+	}
+	/*
+	The first five non-empty page mappings:
+	ef000000 ef000 0xf03fd000 0xf011b8d8
+	ef001000 ef001 0xf03fd004 0xf011b8e0
+	ef002000 ef002 0xf03fd008 0xf011b8e8
+	ef003000 ef003 0xf03fd00c 0xf011b8f0
+	ef004000 ef004 0xf03fd010 0xf011b8f8
+
+	Show memory mappings: [0xef000000 - 0xef004000]
+	  [0xef000] -> [0x0011b] ------U-P  *1
+	  [0xef001] -> [0x0011c] ------U-P  *1
+	  [0xef002] -> [0x0011d] ------U-P  *1
+	  [0xef003] -> [0x0011e] ------U-P  *1
+	  [0xef004] -> [0x0011f] ------U-P  *1
+	*/
+	return 0;
+}
+
+
+int
+mon_memdump(int argc, char** argv, struct Trapframe* tf) {
+	uint32_t begin = strtol(argv[1], NULL, 16);
+	uint32_t end = strtol(argv[2], NULL, 16);
+	uint32_t cur_page = -1;
+	struct PageInfo* pp = NULL;
+	cprintf("Dump memory: [%08p - %08p)\n", begin, end);
+	for (uint32_t i = begin; i < end; i++) {
+		if (PGNUM(i) != cur_page) {
+			cur_page = PGNUM(i);
+			pp = page_lookup(kern_pgdir, (void*)i, NULL);
+		}
+		if ((i & 0xf) == 0 && i != begin) cprintf("\n");
+		cprintf("%02x ", ((unsigned char*)page2kva(pp))[PGOFF(i)]);
+	}
+	cprintf("\n");
+	/*
+	K> memdump 0xef000000 0xef000100
+	00 00 00 00 01 00 00 00 f8 af 15 f0 00 00 00 00
+	08 b0 11 f0 00 00 00 00 10 b0 11 f0 00 00 00 00
+	18 b0 11 f0 00 00 00 00 20 b0 11 f0 00 00 00 00
+	28 b0 11 f0 00 00 00 00 30 b0 11 f0 00 00 00 00
+	38 b0 11 f0 00 00 00 00 40 b0 11 f0 00 00 00 00
+	48 b0 11 f0 00 00 00 00 50 b0 11 f0 00 00 00 00
+	58 b0 11 f0 00 00 00 00 60 b0 11 f0 00 00 00 00
+	68 b0 11 f0 00 00 00 00 70 b0 11 f0 00 00 00 00
+	78 b0 11 f0 00 00 00 00 80 b0 11 f0 00 00 00 00
+	88 b0 11 f0 00 00 00 00 90 b0 11 f0 00 00 00 00
+	98 b0 11 f0 00 00 00 00 a0 b0 11 f0 00 00 00 00
+	a8 b0 11 f0 00 00 00 00 b0 b0 11 f0 00 00 00 00
+	b8 b0 11 f0 00 00 00 00 c0 b0 11 f0 00 00 00 00
+	c8 b0 11 f0 00 00 00 00 d0 b0 11 f0 00 00 00 00
+	d8 b0 11 f0 00 00 00 00 e0 b0 11 f0 00 00 00 00
+	e8 b0 11 f0 00 00 00 00 f0 b0 11 f0 00 00 00 00
+	*/
+	return 0;
+}
 
 
 /***** Kernel monitor command interpreter *****/
