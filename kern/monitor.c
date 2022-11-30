@@ -11,7 +11,6 @@
 #include <kern/monitor.h>
 #include <kern/kdebug.h>
 #include <kern/trap.h>
-#include <kern/pmap.h>
 
 #define CMDBUF_SIZE	80	// enough for one VGA text line
 
@@ -75,34 +74,34 @@ mon_backtrace(int argc, char** argv, struct Trapframe* tf) {
 
 int
 mon_showmappings(int argc, char** argv, struct Trapframe* tf) {
-	uint32_t begin = strtol(argv[1], NULL, 16);
-	uint32_t end = strtol(argv[2], NULL, 16);
-	begin = ROUNDDOWN(begin, PGSIZE);
-	end = ROUNDDOWN(end, PGSIZE);
-	cprintf("Show memory mappings: [%08p - %08p]\n", begin, end);
-	for (uint32_t i = begin; i <= end; i += PGSIZE) {
-		pte_t* pte;
-		struct PageInfo* pp = page_lookup(kern_pgdir, (void*)i, &pte);
-		if (!pp) {
-			cprintf("  [%05p] ->\n", PGNUM(i));
-			continue;
-		}
-		// virtual page, physical page, perm, refcnt
-		cprintf("  [%05p] -> [%05p] %c%c%c%c%c%c%c%c%c  *%d\n",
-			PGNUM(i),
-			PGNUM(page2pa(pp)),
-			*pte & PTE_G ? 'G' : '-',
-			*pte & PTE_PS ? 'S' : '-',
-			*pte & PTE_D ? 'D' : '-',
-			*pte & PTE_A ? 'A' : '-',
-			*pte & PTE_PCD ? 'C' : '-',
-			*pte & PTE_PWT ? 'T' : '-',
-			*pte & PTE_U ? 'U' : '-',
-			*pte & PTE_W ? 'W' : '-',
-			*pte & PTE_P ? 'P' : '-',
-			pp->pp_ref
-		);
-	}
+	// uint32_t begin = strtol(argv[1], NULL, 16);
+	// uint32_t end = strtol(argv[2], NULL, 16);
+	// begin = ROUNDDOWN(begin, PGSIZE);
+	// end = ROUNDDOWN(end, PGSIZE);
+	// cprintf("Show memory mappings: [%08p - %08p]\n", begin, end);
+	// for (uint32_t i = begin; i <= end; i += PGSIZE) {
+	// 	pte_t* pte;
+	// 	struct PageInfo* pp = page_lookup(kern_pgdir, (void*)i, &pte);
+	// 	if (!pp) {
+	// 		cprintf("  [%05p] ->\n", PGNUM(i));
+	// 		continue;
+	// 	}
+	// 	// virtual page, physical page, perm, refcnt
+	// 	cprintf("  [%05p] -> [%05p] %c%c%c%c%c%c%c%c%c  *%d\n",
+	// 		PGNUM(i),
+	// 		PGNUM(page2pa(pp)),
+	// 		*pte & PTE_G ? 'G' : '-',
+	// 		*pte & PTE_PS ? 'S' : '-',
+	// 		*pte & PTE_D ? 'D' : '-',
+	// 		*pte & PTE_A ? 'A' : '-',
+	// 		*pte & PTE_PCD ? 'C' : '-',
+	// 		*pte & PTE_PWT ? 'T' : '-',
+	// 		*pte & PTE_U ? 'U' : '-',
+	// 		*pte & PTE_W ? 'W' : '-',
+	// 		*pte & PTE_P ? 'P' : '-',
+	// 		pp->pp_ref
+	// 	);
+	// }
 	/*
 	The first five non-empty page mappings:
 	ef000000 ef000 0xf03fd000 0xf011b8d8
@@ -124,20 +123,20 @@ mon_showmappings(int argc, char** argv, struct Trapframe* tf) {
 
 int
 mon_memdump(int argc, char** argv, struct Trapframe* tf) {
-	uint32_t begin = strtol(argv[1], NULL, 16);
-	uint32_t end = strtol(argv[2], NULL, 16);
-	uint32_t cur_page = -1;
-	struct PageInfo* pp = NULL;
-	cprintf("Dump memory: [%08p - %08p)\n", begin, end);
-	for (uint32_t i = begin; i < end; i++) {
-		if (PGNUM(i) != cur_page) {
-			cur_page = PGNUM(i);
-			pp = page_lookup(kern_pgdir, (void*)i, NULL);
-		}
-		if ((i & 0xf) == 0 && i != begin) cprintf("\n");
-		cprintf("%02x ", ((unsigned char*)page2kva(pp))[PGOFF(i)]);
-	}
-	cprintf("\n");
+	// uint32_t begin = strtol(argv[1], NULL, 16);
+	// uint32_t end = strtol(argv[2], NULL, 16);
+	// uint32_t cur_page = -1;
+	// struct PageInfo* pp = NULL;
+	// cprintf("Dump memory: [%08p - %08p)\n", begin, end);
+	// for (uint32_t i = begin; i < end; i++) {
+	// 	if (PGNUM(i) != cur_page) {
+	// 		cur_page = PGNUM(i);
+	// 		pp = page_lookup(kern_pgdir, (void*)i, NULL);
+	// 	}
+	// 	if ((i & 0xf) == 0 && i != begin) cprintf("\n");
+	// 	cprintf("%02x ", ((unsigned char*)page2kva(pp))[PGOFF(i)]);
+	// }
+	// cprintf("\n");
 	/*
 	K> memdump 0xef000000 0xef000100
 	00 00 00 00 01 00 00 00 f8 af 15 f0 00 00 00 00

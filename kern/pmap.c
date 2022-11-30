@@ -104,6 +104,7 @@ boot_alloc(uint32_t n)
 	//
 	// LAB 2: Your code here.
 	result = nextfree;
+	cprintf("alloc %p\n", result);
 	nextfree += ROUNDUP(n, PGSIZE);
 	if ((size_t)nextfree - KERNBASE > npages * PGSIZE)
 		panic("Out of memory");
@@ -133,8 +134,12 @@ mem_init(void)
 
 	//////////////////////////////////////////////////////////////////////
 	// create initial page directory.
-	kern_pgdir = (pde_t *) boot_alloc(PGSIZE);
+	cprintf("all addr: %p %p %p %p %p\n", &bootstacktop, &bootstack, &pages, &npages, &kern_pgdir);
+	cprintf("kern_pgdir %08x %p %p\n", boot_alloc(0), &kern_pgdir, &pages); // kern_pgdir f0182000
+	kern_pgdir = (pde_t*)boot_alloc(PGSIZE);
+	cprintf("kern_pgdir %08x %p\n", kern_pgdir, &kern_pgdir); // kern_pgdir f0182000
 	memset(kern_pgdir, 0, PGSIZE);
+	cprintf("kern_pgdir %08x %p\n", kern_pgdir, &kern_pgdir); // kern_pgdir f0182000
 
 	//////////////////////////////////////////////////////////////////////
 	// Recursively insert PD in itself as a page table, to form
