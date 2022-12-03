@@ -19,13 +19,12 @@ static void boot_aps(void);
 
 
 void
-i386_init(void)
-{
+i386_init(void) {
 	// Initialize the console.
 	// Can't call cprintf until after we do this!
 	cons_init();
 
-	cprintf("6828 decimal is %o octal!\n", 6828);
+	// cprintf("6828 decimal is %o octal!\n", 6828);
 
 	// Lab 2 memory management initialization functions
 	mem_init();
@@ -62,15 +61,14 @@ i386_init(void)
 // While boot_aps is booting a given CPU, it communicates the per-core
 // stack pointer that should be loaded by mpentry.S to that CPU in
 // this variable.
-void *mpentry_kstack;
+void* mpentry_kstack;
 
 // Start the non-boot (AP) processors.
 static void
-boot_aps(void)
-{
+boot_aps(void) {
 	extern unsigned char mpentry_start[], mpentry_end[];
-	void *code;
-	struct CpuInfo *c;
+	void* code;
+	struct CpuInfo* c;
 
 	// Write entry code to unused memory at MPENTRY_PADDR
 	code = KADDR(MPENTRY_PADDR);
@@ -86,15 +84,14 @@ boot_aps(void)
 		// Start the CPU at mpentry_start
 		lapic_startap(c->cpu_id, PADDR(code));
 		// Wait for the CPU to finish some basic setup in mp_main()
-		while(c->cpu_status != CPU_STARTED)
+		while (c->cpu_status != CPU_STARTED)
 			;
 	}
 }
 
 // Setup code for APs
 void
-mp_main(void)
-{
+mp_main(void) {
 	// We are in high EIP now, safe to switch to kern_pgdir 
 	lcr3(PADDR(kern_pgdir));
 	cprintf("SMP: CPU %d starting\n", cpunum());
@@ -118,15 +115,14 @@ mp_main(void)
  * Variable panicstr contains argument to first call to panic; used as flag
  * to indicate that the kernel has already called panic.
  */
-const char *panicstr;
+const char* panicstr;
 
 /*
  * Panic is called on unresolvable fatal errors.
  * It prints "panic: mesg", and then enters the kernel monitor.
  */
 void
-_panic(const char *file, int line, const char *fmt,...)
-{
+_panic(const char* file, int line, const char* fmt, ...) {
 	va_list ap;
 
 	if (panicstr)
@@ -150,8 +146,7 @@ dead:
 
 /* like panic, but don't */
 void
-_warn(const char *file, int line, const char *fmt,...)
-{
+_warn(const char* file, int line, const char* fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);

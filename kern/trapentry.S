@@ -27,7 +27,8 @@
 	.align 2;		/* align function definition */		\
 	name:			/* function starts here */		\
 	pushl $(num);							\
-	jmp _alltraps
+	jmp _alltraps; \
+	.space 2;
 
 /* Use TRAPHANDLER_NOEC for traps where the CPU doesn't push an error code.
  * It pushes a 0 in place of the error code, so the trap frame has the same
@@ -48,9 +49,42 @@
  * Lab 3: Your code here for generating entry points for the different traps.
  */
 
+.globl trap_handler_table
+trap_handler_table:
 
+TRAPHANDLER_NOEC(handler_divide,  T_DIVIDE)
+TRAPHANDLER_NOEC(handler_debug,   T_DEBUG)
+TRAPHANDLER_NOEC(handler_nmi,     T_NMI)
+TRAPHANDLER_NOEC(handler_brkpt,   T_BRKPT)
+TRAPHANDLER_NOEC(handler_oflow,   T_OFLOW)
+TRAPHANDLER_NOEC(handler_bound,   T_BOUND)
+TRAPHANDLER_NOEC(handler_illop,   T_ILLOP)
+TRAPHANDLER_NOEC(handler_device,  T_DEVICE)
+TRAPHANDLER(handler_dblflt, T_DBLFLT)
+TRAPHANDLER_NOEC(handler_coproc,  T_COPROC) # Padding
+TRAPHANDLER(handler_tss,    T_TSS)
+TRAPHANDLER(handler_segnp,  T_SEGNP)
+TRAPHANDLER(handler_stack,  T_STACK)
+TRAPHANDLER(handler_gpflt,  T_GPFLT)
+TRAPHANDLER(handler_pgflt,  T_PGFLT)
+TRAPHANDLER_NOEC(handler_res,  T_RES)
+TRAPHANDLER_NOEC(handler_fperr,   T_FPERR)
+TRAPHANDLER(handler_align,  T_ALIGN)
+TRAPHANDLER_NOEC(handler_mchk,    T_MCHK)
+TRAPHANDLER_NOEC(handler_simderr, T_SIMDERR)
+
+TRAPHANDLER_NOEC(handler_syscall, T_SYSCALL)
 
 /*
  * Lab 3: Your code here for _alltraps
  */
 
+_alltraps:
+    pushl %ds
+    pushl %es
+    pushal
+    movw $GD_KD, %eax
+    movw %ax, %ds
+    movw %ax, %es
+    pushl %esp
+    call trap
