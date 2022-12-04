@@ -28,7 +28,6 @@
 	name:					/* function starts here */				\
 	pushl $(num);													\
 	jmp _alltraps; 													\
-	.space 2;
 
 /* Use TRAPHANDLER_NOEC for traps where the CPU doesn't push an error code.
  * It pushes a 0 in place of the error code, so the trap frame has the same

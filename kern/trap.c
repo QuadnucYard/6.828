@@ -70,13 +70,70 @@ trap_init(void)
 {
 	extern struct Segdesc gdt[];
 
+	void handler_divide();
+	void handler_debug();
+	void handler_nmi();
+	void handler_brkpt();
+	void handler_oflow();
+	void handler_bound();
+	void handler_illop();
+	void handler_device();
+	void handler_simderr();
+	void handler_fperr();
+	void handler_mchk();
+	void handler_res();
+	void handler_syscall();
+	void handler_dblflt();
+	void handler_tss();
+	void handler_segnp();
+	void handler_stack();
+	void handler_gpflt();
+	void handler_pgflt();
+	void handler_align();
+
 	// LAB 3: Your code here.
-	extern void* trap_handler_table;
-	for (int i = 0; i < 20; i++)
-		SETGATE(idt[i], 0, GD_KT, (void*)&trap_handler_table + i * 6, i == T_BRKPT ? 3 : 0);
+	// extern void* trap_handler_table;
+	// for (int i = 0; i < 20; i++)
+	// 	SETGATE(idt[i], 0, GD_KT, (void*)&trap_handler_table + i * 10, i == T_BRKPT ? 3 : 0);
 	// ! For T_BRKPT, the last argument is 3
 	// Special treat for T_SYSCALL, at 20-th place.
-	SETGATE(idt[T_SYSCALL], 0, GD_KT, (void*)&trap_handler_table + 20 * 6, 3);
+	// SETGATE(idt[T_SYSCALL], 0, GD_KT, (void*)&trap_handler_table + 20 * 10, 3);
+
+	SETGATE(idt[T_DIVIDE], 0, GD_KT, handler_divide, 0);
+	SETGATE(idt[T_DEBUG], 0, GD_KT, handler_debug, 0);
+	SETGATE(idt[T_NMI], 0, GD_KT, handler_nmi, 0);
+	SETGATE(idt[T_BRKPT], 0, GD_KT, handler_brkpt, 3);
+	SETGATE(idt[T_OFLOW], 0, GD_KT, handler_oflow, 0);
+	SETGATE(idt[T_BOUND], 0, GD_KT, handler_bound, 0);
+	SETGATE(idt[T_ILLOP], 0, GD_KT, handler_illop, 0);
+	SETGATE(idt[T_DEVICE], 0, GD_KT, handler_device, 0);
+	SETGATE(idt[T_SIMDERR], 0, GD_KT, handler_simderr, 0);
+	SETGATE(idt[T_FPERR], 0, GD_KT, handler_fperr, 0);
+	SETGATE(idt[T_MCHK], 0, GD_KT, handler_mchk, 0);
+	SETGATE(idt[T_SYSCALL], 0, GD_KT, handler_syscall, 3);
+	SETGATE(idt[T_DBLFLT], 0, GD_KT, handler_dblflt, 0);
+	SETGATE(idt[T_TSS], 0, GD_KT, handler_tss, 0);
+	SETGATE(idt[T_SEGNP], 0, GD_KT, handler_segnp, 0);
+	SETGATE(idt[T_STACK], 0, GD_KT, handler_stack, 0);
+	SETGATE(idt[T_GPFLT], 0, GD_KT, handler_gpflt, 0);
+	SETGATE(idt[T_PGFLT], 0, GD_KT, handler_pgflt, 0);
+	SETGATE(idt[T_ALIGN], 0, GD_KT, handler_align, 0);
+
+	// cprintf("trap %p %p %p %p\n", &trap_handler_table, &handler_divide, &handler_simderr, (void*)&trap_handler_table + 19 * 10);
+	// cprintf("%p %p\n", &handler_divide, (void*)&trap_handler_table + 0 * 10);
+	// cprintf("%p %p\n", &handler_debug, (void*)&trap_handler_table + 1 * 10);
+	// cprintf("%p %p\n", &handler_nmi, (void*)&trap_handler_table + 2 * 10);
+	// cprintf("%p %p\n", &handler_segnp, (void*)&trap_handler_table + 11 * 10);
+	// cprintf("%p %p\n", &handler_stack, (void*)&trap_handler_table + 12 * 10);
+
+	// cprintf("%p %p\n", &handler_gpflt, (void*)&trap_handler_table + 13 * 10);
+	// cprintf("%p %p\n", &handler_pgflt, (void*)&trap_handler_table + 14 * 10);
+	// cprintf("%p %p\n", &handler_res, (void*)&trap_handler_table + 15 * 10);
+	// cprintf("%p %p\n", &handler_fperr, (void*)&trap_handler_table + 16 * 10);
+	// cprintf("%p %p\n", &handler_align, (void*)&trap_handler_table + 17 * 10);
+
+	// cprintf("%p %p\n", &handler_mchk, (void*)&trap_handler_table + 18 * 10);
+	// cprintf("%p %p\n", &handler_simderr, (void*)&trap_handler_table + 19 * 10);
 
 	extern void handler_timer();
 	extern void handler_kbd();
