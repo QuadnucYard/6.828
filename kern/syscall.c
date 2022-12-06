@@ -313,15 +313,13 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 		return -E_IPC_NOT_RECV;
 
 	// Check page
+	int r;
 	pte_t* pte;
 	struct PageInfo* page = page_lookup(curenv->env_pgdir, srcva, &pte);
-	if (srcva < (void*)UTOP && (PGOFF(srcva) || !pte || (perm & ~PTE_SYSCALL)))
-		return -E_INVAL;
-	if ((perm & PTE_W) && !(*pte & PTE_W))
-		return -E_INVAL;
 	if (srcva < (void*)UTOP) {
-		int r = page_insert(env->env_pgdir, page, env->env_ipc_dstva, perm);
-		if (r < 0)
+		if (PGOFF(srcva) || !pte || (perm & ~PTE_SYSCALL) || ((perm & PTE_W) && !(*pte & PTE_W)))
+			return -E_INVAL;
+		if ((r = page_insert(env->env_pgdir, page, env->env_ipc_dstva, perm)) < 0)
 			return r;
 	}
 
