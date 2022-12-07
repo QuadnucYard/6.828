@@ -31,6 +31,7 @@ struct pci_driver pci_attach_class[] = {
 // pci_attach_vendor matches the vendor ID and device ID of a PCI device. key1
 // and key2 should be the vendor ID and device ID respectively
 struct pci_driver pci_attach_vendor[] = {
+	{ PCI_E1000_VENDOR, PCI_E1000_DEVICE, &pci_e1000_attach},
 	{ 0, 0, 0 },
 };
 
@@ -245,6 +246,11 @@ pci_func_enable(struct pci_func *f)
 	cprintf("PCI function %02x:%02x.%d (%04x:%04x) enabled\n",
 		f->bus->busno, f->dev, f->func,
 		PCI_VENDOR(f->dev_id), PCI_PRODUCT(f->dev_id));
+}
+
+static int pci_func_attach(struct pci_func* pcif) {
+	pci_func_enable(pcif);
+	return 1;
 }
 
 int
