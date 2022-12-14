@@ -125,5 +125,10 @@ sys_time_msec(void)
 
 int
 sys_net_try_send(void* addr, size_t len) {
-	return (unsigned int)syscall(SYS_net_try_send, 0, (uint32_t)addr, len, 0, 0, 0);
+	return syscall(SYS_net_try_send, 0, (uint32_t)addr, len, 0, 0, 0);
+}
+
+int
+sys_net_recv(void* addr, size_t len) {
+	return syscall(SYS_net_recv, 0, (uint32_t)addr, len, 0, 0, 0);
 }

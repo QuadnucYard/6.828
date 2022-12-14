@@ -161,3 +161,25 @@ e1000_transmit(void* addr, size_t len) {
 
 	return 0;
 }
+
+int e1000_receive(void* addr, size_t len) {
+	uint32_t rdt = e1000[E1000_RDT / 4];
+	struct e1000_rx_desc* nxt;
+	void* base_addr = addr;
+
+	do {
+		rdt = (rdt + 1) % RXRING_LEN;
+		nxt = rx_ring + rdt;
+		if (!(nxt->status & E1000_RXD_STAT_DD))
+			return -1;
+		uint16_t len1 = MIN(nxt->length, len);
+		memmove(addr, rx_buf[rdt], len1);
+		nxt->status &= ~E1000_RXD_STAT_DD;
+		addr += len1;
+		len -= len1;
+	} while (!(nxt->status & E1000_RXD_STAT_EOP));
+
+	e1000[E1000_RDT / 4] = rdt;
+
+	return addr - base_addr;
+}
