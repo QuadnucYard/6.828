@@ -1,4 +1,5 @@
 #include <inc/lib.h>
+#include <inc/elf.h>
 
 int flag[256];
 
@@ -36,14 +37,33 @@ lsdir(const char *path, const char *prefix)
 		panic("error reading directory %s: %e", path, n);
 }
 
+int
+is_exec(const char* prog) {
+	int r;
+	if ((r = open(prog, O_RDONLY)) < 0)
+		return false;
+	int fd = r;
+
+	// Read elf header
+	static unsigned char elf_buf[512];
+	struct Elf* elf = (struct Elf*)elf_buf;
+	r = readn(fd, elf_buf, sizeof(elf_buf)) == sizeof(elf_buf) && elf->e_magic == ELF_MAGIC;
+	close(fd);
+	return r;
+}
+
 void
 ls1(const char *prefix, bool isdir, off_t size, const char *name)
 {
 	const char *sep;
 
-	if(flag['l'])
+	if (flag['l'])
 		printf("%11d %c ", size, isdir ? 'd' : '-');
-	if(prefix) {
+	if (isdir)
+		cprintf("\033[1;34m");
+	else if (is_exec(name))
+		cprintf("\033[1;32m");
+	if (prefix) {
 		if (prefix[0] && prefix[strlen(prefix)-1] != '/')
 			sep = "/";
 		else
@@ -53,6 +73,7 @@ ls1(const char *prefix, bool isdir, off_t size, const char *name)
 	printf("%s", name);
 	if(flag['F'] && isdir)
 		printf("/");
+	cprintf("\033[0m");
 	printf("\n");
 }
 
