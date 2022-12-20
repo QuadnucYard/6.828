@@ -218,6 +218,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
+	printf("fsformat %s %s %s %s\n", argv[1], argv[2], argv[3], argv[4]);
 	int i;
 	char *s;
 	struct Dir root;
@@ -234,8 +235,21 @@ main(int argc, char **argv)
 	opendisk(argv[1]);
 
 	startdir(&super->s_root, &root);
+
+	{
+		struct File* f = diradd(&root, FTYPE_DIR, "home");
+		struct Dir dir;
+		startdir(f, &dir);
+		diradd(&dir, FTYPE_DIR, "jos");
+		finishdir(&dir);
+	}
+
+	diradd(&root, FTYPE_DIR, "usr");
+	diradd(&root, FTYPE_DIR, "bin");
+	diradd(&root, FTYPE_DIR, "root");
+
 	for (i = 3; i < argc; i++)
-		writefile(&root, argv[i]);
+		writefile(&root, argv[i]), printf("+ %s\n", argv[i]);
 	finishdir(&root);
 
 	finishdisk();

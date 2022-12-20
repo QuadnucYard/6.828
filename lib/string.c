@@ -117,6 +117,18 @@ strfind(const char *s, char c)
 	return (char *) s;
 }
 
+// Return a pointer to the last occurrence of 'c' in 's',
+// or a null pointer if the string has no 'c'.
+char*
+strrchr(const char* s, char c) {
+	char* ret = NULL;
+	for (; *s; s++)
+		if (*s == c)
+			ret = (char*)s;
+	return ret;
+}
+
+
 #if ASM
 void *
 memset(void *v, int c, size_t n)

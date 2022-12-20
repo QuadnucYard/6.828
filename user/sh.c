@@ -3,6 +3,7 @@
 #define BUFSIZ 1024		/* Find the buffer overrun bug! */
 int debug = 0;
 
+char cwd[MAXPATHLEN] = "/";
 
 // gettoken(s, 0) prepares gettoken for subsequent calls and returns 0.
 // gettoken(0, token) parses a shell token from the previously set string,
@@ -12,6 +13,7 @@ int debug = 0;
 // tokens from the string.
 int gettoken(char *s, char **token);
 
+int internal_call(int argc, char** argv);
 
 // Parse a shell command from string 's' and execute it.
 // Do not return until the shell command is finished.
@@ -130,6 +132,14 @@ runit:
 		return;
 	}
 
+	// Here check internal commands
+	if ((r = internal_call(argc, argv)) > 0) {
+		if (r == 1)
+			exit();
+		else
+			return;
+	}
+
 	// Clean up command line.
 	// Read all commands from the filesystem: add an initial '/' to
 	// the command name.
@@ -137,6 +147,7 @@ runit:
 	if (argv[0][0] != '/') {
 		argv0buf[0] = '/';
 		strcpy(argv0buf + 1, argv[0]);
+		// snprintf(argv0buf, BUFSIZ, "%s%s", cwd, argv[0]);
 		argv[0] = argv0buf;
 	}
 	argv[argc] = 0;
@@ -263,11 +274,20 @@ usage(void)
 	exit();
 }
 
+int check_cd(const char* s) {
+	while (*s && *s == ' ')
+		++s;
+	if (!*s)
+		return 0;
+	return s[0] == 'c' && s[1] == 'd' && (s[2] == 0 || s[2] == ' ');
+}
+
 void
 umain(int argc, char **argv)
 {
 	int r, interactive, echocmds;
 	struct Argstate args;
+	char prompt[MAXPATHLEN];
 
 	interactive = '?';
 	echocmds = 0;
@@ -301,7 +321,13 @@ umain(int argc, char **argv)
 	while (1) {
 		char *buf;
 
-		buf = creadline(interactive ? "$ " : NULL);
+		if (interactive) {
+			snprintf(prompt, MAXPATHLEN, "root:%s$ ", cwd);
+			buf = creadline(prompt);
+		} else {
+			buf = creadline(NULL);
+		}
+
 		if (buf == NULL) {
 			if (debug)
 				cprintf("EXITING\n");
@@ -313,6 +339,10 @@ umain(int argc, char **argv)
 			continue;
 		if (echocmds)
 			printf("# %s\n", buf);
+		if (check_cd(buf)) {
+			runcmd(buf);
+			continue;
+		}
 		if (debug)
 			cprintf("BEFORE FORK\n");
 		if ((r = fork()) < 0)
@@ -327,3 +357,69 @@ umain(int argc, char **argv)
 	}
 }
 
+
+int
+pwd(int argc, char** argv) {
+	printf("%s\n", cwd);
+	return 0;
+}
+
+int
+cd(int argc, char** argv) {
+	if (argc == 1) {
+		// Here cwd should change to home path
+		return 0;
+	}
+
+	const char* path = argv[1];
+	static char tmp_path[MAXPATHLEN];
+
+	if (path[0] == '.') { // Current
+		if (path[1] == '.') { // Parent
+			char* last = strrchr(cwd, '/');
+			if (last)
+				*last = 0;
+		}
+		return 0;
+	}
+
+	if (path[0] == '/') // Absolute
+		strcpy(tmp_path, path);
+	else
+		snprintf(tmp_path, MAXPATHLEN, "%s%s", cwd, path);
+
+	struct Stat st;
+	if (stat(tmp_path, &st) < 0) {
+		cprintf("sh: %s: No such file or directory\n", argv[1]);
+		return -E_NOT_FOUND;
+	}
+	if (!st.st_isdir) {
+		cprintf("sh: %s: Not a directory\n", argv[1]);
+		return -E_BAD_PATH;
+	}
+	strcpy(cwd, tmp_path);
+	return 0;
+}
+
+
+// Returns true if matches any
+int internal_call(int argc, char** argv) {
+	struct CmdEntry {
+		char* name;
+		int (*proc)(int, char**);
+		int flag;
+	};
+	static struct CmdEntry cmds[] = {
+		{ "pwd", &pwd, 1 },
+		{ "cd", &cd, 2 },
+	};
+
+	for (int i = 0; i < ARRAY_SIZE(cmds); i++) {
+		if (strcmp(argv[0], cmds[i].name) == 0) {
+			cmds[i].proc(argc, argv);
+			return cmds[i].flag;
+		}
+	}
+	thisenv->env_parent_id;
+	return 0;
+}
