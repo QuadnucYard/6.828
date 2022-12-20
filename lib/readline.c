@@ -55,13 +55,13 @@ readline(const char *prompt)
 
 
 char*
-creadline(const char* prompt) {
+creadline(const char* prompt, Completer completer) {
 	// If not console, fall bakc on normal mode.
 	if (!iscons(0))
 		return readline(prompt);
 
 	int i = 0, l = 0;
-	int esc = 0, ins = 1;
+	int esc = 0, ins = 1, tab = 0;
 
 	// tail is the one beyond last one. cur is the current one.
 	hist.cur = hist.tail;
@@ -83,7 +83,12 @@ creadline(const char* prompt) {
 			if (c != -E_EOF)
 				cprintf("read error: %e\n", c);
 			return NULL;
-		} else if ((c == '\b' || c == '\x7f') && i > 0) {
+		}
+		if (c == '\t')
+			++tab;
+		else
+			tab = 0;
+		if ((c == '\b' || c == '\x7f') && i > 0) {
 			for (int j = i; j <= l; j++)
 				buf[j - 1] = buf[j];
 			i--;
@@ -171,6 +176,31 @@ creadline(const char* prompt) {
 				}
 			}
 			return buf;
+		}
+		if (tab > 0 && completer) {
+			char* comp = completer(buf, i);
+			if (comp) {
+				char tmp[BUFLEN];
+				strcpy(tmp, comp);
+				int cnt = 1;
+				for (char* comp2; (comp2 = completer(NULL, i)); ++cnt) {
+					if (tab > 1) {
+						if (cnt == 1) // End the line to be completed
+							cprintf("\033[%dC\r\n%-20s", l - i, tmp);
+						cprintf("%-20s%s", comp2, cnt % 6 == 5 ? "\r\n" : "");
+					}
+				}
+				if (cnt == 1 && tab == 1) {
+					int s = i;
+					while (s > 0 && buf[s - 1] != ' ')
+						--s;
+					cprintf("%s", tmp + i - s);
+					strcpy(buf + i, tmp + i - s);
+					l = i = i + strlen(tmp);
+				} else if (cnt > 1 && tab > 1) {
+					cprintf("%s%s%s", cnt % 6 == 0 ? "" : "\r\n", prompt, buf);
+				}
+			}
 		}
 	}
 }

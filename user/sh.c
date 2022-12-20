@@ -282,6 +282,33 @@ int check_cd(const char* s) {
 	return s[0] == 'c' && s[1] == 'd' && (s[2] == 0 || s[2] == ' ');
 }
 
+char* command_completer(char* buf, int end) {
+	static char tmp[BUFSIZ];
+	static int len;
+	static int fd;
+
+	if (buf) {
+		int start = end;
+		while (start > 0 && buf[start - 1] != ' ')
+			--start;
+
+		strncpy(tmp, buf + start, len = end - start);
+		tmp[len] = 0;
+
+		if ((fd = open(cwd, O_RDONLY)) < 0)
+			panic("open %s: %e", cwd, fd);
+	}
+
+	int n;
+	static struct File f;
+	while ((n = readn(fd, &f, sizeof f)) == sizeof f)
+		if (strncmp(tmp, f.f_name, len) == 0)
+			return f.f_name;
+	close(fd);
+	fd = 0;
+	return NULL;
+}
+
 void
 umain(int argc, char **argv)
 {
@@ -323,9 +350,9 @@ umain(int argc, char **argv)
 
 		if (interactive) {
 			snprintf(prompt, MAXPATHLEN, "root:%s$ ", cwd);
-			buf = creadline(prompt);
+			buf = creadline(prompt, &command_completer);
 		} else {
-			buf = creadline(NULL);
+			buf = creadline(NULL, NULL);
 		}
 
 		if (buf == NULL) {
