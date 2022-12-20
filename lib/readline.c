@@ -1,12 +1,20 @@
 #include <inc/stdio.h>
 #include <inc/error.h>
+#include <inc/string.h>
 
-#define BUFLEN 1024
-static char buf[BUFLEN];
+#define HISTLEN 32
+#define BUFLEN 256
 
-char *
+struct buf_hist {
+	char buf[HISTLEN][BUFLEN];
+	int head, tail, cur;
+};
+static struct buf_hist hist;
+
+char*
 readline(const char *prompt)
 {
+	static char buf[BUFLEN];
 	int i, c, echoing;
 
 #if JOS_KERNEL
@@ -52,8 +60,13 @@ creadline(const char* prompt) {
 	if (!iscons(0))
 		return readline(prompt);
 
-	int i, l, c, echoing;
+	int i = 0, l = 0;
 	int esc = 0, ins = 1;
+
+	// tail is the one beyond last one. cur is the current one.
+	hist.cur = hist.tail;
+	char* buf = hist.buf[hist.cur];
+
 #if JOS_KERNEL
 	if (prompt != NULL)
 		cprintf("%s", prompt);
@@ -61,10 +74,10 @@ creadline(const char* prompt) {
 	if (prompt != NULL)
 		fprintf(1, "%s", prompt);
 #endif
+	cprintf("%s", buf);
 
-	i = l = 0;
 	while (1) {
-		c = getchar();
+		int c = getchar();
 		// cprintf("get %d\n", (int)c);
 		if (c < 0) {
 			if (c != -E_EOF)
@@ -85,14 +98,33 @@ creadline(const char* prompt) {
 				continue;
 			} else if (esc == 2) { // Matches 0x5B
 				switch (c) {
-				case 'D':
-					cprintf("\033[D");
-					--i;
+				case 'A': // Up
+					if (hist.cur != hist.head) {
+						hist.cur = (hist.cur - 1 + HISTLEN) % HISTLEN;
+						buf = hist.buf[hist.cur];
+						l = strlen(buf);
+						cprintf("\r\033[K%s%s", prompt, buf);
+					}
 					break;
-				case 'C':
-					cprintf("\033[C");
-					if (buf[i])
+				case 'B': // Down
+					if (hist.cur != hist.tail) {
+						hist.cur = (hist.cur + 1) % HISTLEN;
+						buf = hist.buf[hist.cur];
+						l = strlen(buf);
+						cprintf("\r\033[K%s%s", prompt, buf);
+					}
+					break;
+				case 'D': // Left
+					if (i > 0) {
+						--i;
+						cprintf("\033[D");
+					}
+					break;
+				case 'C': // Right
+					if (i < l) {
 						++i;
+						cprintf("\033[C");
+					}
 					break;
 				}
 				if (c == 0x32) esc = 3;
@@ -123,12 +155,21 @@ creadline(const char* prompt) {
 				cprintf("\033[s%.*s\033[u", l - i, buf + i);
 				for (int j = l; j > i; j--)
 					buf[j] = buf[j - 1];
+				l++;
+			} else if (l == i) {
+				l++;
 			}
 			buf[i++] = c;
-			l++;
 		} else if (c == '\n' || c == '\r') {
 			cputchar('\n');
 			buf[l] = 0;
+			if (hist.tail == hist.cur) {
+				hist.tail = (hist.tail + 1) % HISTLEN;
+				if (hist.tail == hist.head) {
+					memset(hist.buf[hist.head], 0, BUFLEN);
+					++hist.head;
+				}
+			}
 			return buf;
 		}
 	}
