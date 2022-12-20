@@ -5,6 +5,22 @@ int debug = 0;
 
 char cwd[MAXPATHLEN] = "/";
 
+void
+mywait(envid_t envid) {
+	const volatile struct Env* e;
+
+	assert(envid != 0);
+	e = &envs[ENVX(envid)];
+	while (e->env_id == envid && e->env_status != ENV_FREE) {
+		int x = sys_cgetc();
+		if (x == 3) {
+			cprintf("SIGINT %d\n", envid);
+			sys_env_destroy(envid);
+		}
+		sys_yield();
+	}
+}
+
 // gettoken(s, 0) prepares gettoken for subsequent calls and returns 0.
 // gettoken(0, token) parses a shell token from the previously set string,
 // null-terminates that token, stores the token pointer in '*token',
@@ -170,7 +186,7 @@ runit:
 	if (r >= 0) {
 		if (debug)
 			cprintf("[%08x] WAIT %s %08x\n", thisenv->env_id, argv[0], r);
-		wait(r);
+		mywait(r);
 		if (debug)
 			cprintf("[%08x] wait finished\n", thisenv->env_id);
 	}
@@ -180,7 +196,7 @@ runit:
 	if (pipe_child) {
 		if (debug)
 			cprintf("[%08x] WAIT pipe_child %08x\n", thisenv->env_id, pipe_child);
-		wait(pipe_child);
+		mywait(pipe_child);
 		if (debug)
 			cprintf("[%08x] wait finished\n", thisenv->env_id);
 	}
