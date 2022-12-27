@@ -389,6 +389,11 @@ sys_net_recv(void* addr, size_t len) {
 	return e1000_receive(addr, len);
 }
 
+static int
+sys_getmac(uint8_t* mac) {
+	return e1000_getmac(mac);
+}
+
 // Dispatches to the correct kernel function, passing the arguments.
 int32_t
 syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
@@ -433,6 +438,8 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 		return sys_net_try_send((void*)a1, a2);
 	case SYS_net_recv:
 		return sys_net_recv((void*)a1, a2);
+	case SYS_getmac:
+		return sys_getmac((uint8_t*)a1);
 	default:
 		return -E_INVAL;
 	}

@@ -6,7 +6,7 @@
 
 volatile uint32_t* e1000;
 
-uint32_t mac[2] = { 0x12005452, 0x5634 };
+uint16_t ia[3] = {};
 
 struct e1000_tx_desc tx_ring[TXRING_LEN];
 char tx_buf[TXRING_LEN][MAX_PKT_SIZE];
@@ -20,6 +20,23 @@ init_desc() {
 	for (int i = 0; i < RXRING_LEN; i++) {
 		rx_ring[i].addr = PADDR(rx_buf + i);
 	}
+}
+
+static void
+init_mac() {
+	for (int i = 0; i < 3; i++) {
+		e1000[E1000_EERD / 4] = i << 8 | 1;
+		while (!(e1000[E1000_EERD / 4] & 1 << 4));
+		ia[i] = e1000[E1000_EERD / 4] >> 16;
+	}
+	e1000[E1000_RA / 4 + 0] = ia[0] | ia[1] << 16;
+	e1000[E1000_RA / 4 + 1] = ia[2] | E1000_RAH_AV;
+}
+
+int
+e1000_getmac(uint8_t* mac) {
+	memcpy(mac, ia, 6);
+	return 0;
 }
 
 int
@@ -84,10 +101,9 @@ pci_e1000_attach(struct pci_func* pcif) {
 	initializes the Receive Descriptor Head (RDH) register and Receive Descriptor Tail (RDT) with the
 	appropriate head and tail addresses.
 	*/
-	e1000[E1000_RA / 4] = mac[0];
-	e1000[E1000_RA / 4 + 1] = mac[1] | E1000_RAH_AV;
-	cprintf("e1000: mac address %x:%x\n", mac[1], mac[0]);
-	memset((void*)e1000 + E1000_MTA / 4, 0, 128 * 4);
+	init_mac();
+	cprintf("e1000: mac address %x:%x\n", e1000[E1000_RA / 4 + 1], e1000[E1000_RA / 4]);
+	memset((void*)e1000 + E1000_MTA, 0, 128 * 4);
 	e1000[E1000_IMS / 4] = E1000_IMS_RXT0 | E1000_IMS_RXO | E1000_IMS_RXDMT0 | E1000_IMS_RXSEQ | E1000_IMS_LSC;
 	e1000[E1000_RDBAL / 4] = PADDR(rx_ring);
 	e1000[E1000_RDLEN / 4] = sizeof(rx_ring);

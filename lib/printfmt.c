@@ -219,6 +219,12 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 			base = 8;
 			goto number;
 
+			// (unsigned) binary
+		case 'b':
+			num = getuint(&ap, lflag);
+			base = 2;
+			goto number;
+
 		// pointer
 		case 'p':
 			putch('0', putdat);
