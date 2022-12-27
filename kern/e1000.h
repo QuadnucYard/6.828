@@ -205,22 +205,22 @@
 #define E1000_TXD_DTYP_C     0x00000000 /* Context Descriptor */
 #define E1000_TXD_POPTS_IXSM 0x01       /* Insert IP checksum */
 #define E1000_TXD_POPTS_TXSM 0x02       /* Insert TCP/UDP checksum */
-#define E1000_TXD_CMD_EOP    0x01000000 /* End of Packet */
-#define E1000_TXD_CMD_IFCS   0x02000000 /* Insert FCS (Ethernet CRC) */
-#define E1000_TXD_CMD_IC     0x04000000 /* Insert Checksum */
-#define E1000_TXD_CMD_RS     0x08000000 /* Report Status */
-#define E1000_TXD_CMD_RPS    0x10000000 /* Report Packet Sent */
-#define E1000_TXD_CMD_DEXT   0x20000000 /* Descriptor extension (0 = legacy) */
-#define E1000_TXD_CMD_VLE    0x40000000 /* Add VLAN tag */
-#define E1000_TXD_CMD_IDE    0x80000000 /* Enable Tidv register */
-#define E1000_TXD_STAT_DD    0x00000001 /* Descriptor Done */
-#define E1000_TXD_STAT_EC    0x00000002 /* Excess Collisions */
-#define E1000_TXD_STAT_LC    0x00000004 /* Late Collisions */
-#define E1000_TXD_STAT_TU    0x00000008 /* Transmit underrun */
-#define E1000_TXD_CMD_TCP    0x01000000 /* TCP packet */
-#define E1000_TXD_CMD_IP     0x02000000 /* IP packet */
-#define E1000_TXD_CMD_TSE    0x04000000 /* TCP Seg enable */
-#define E1000_TXD_STAT_TC    0x00000004 /* Tx Underrun */
+#define E1000_TXD_CMD_EOP    0x01       /* End of Packet */
+#define E1000_TXD_CMD_IFCS   0x02       /* Insert FCS (Ethernet CRC) */
+#define E1000_TXD_CMD_IC     0x04       /* Insert Checksum */
+#define E1000_TXD_CMD_RS     0x08       /* Report Status */
+#define E1000_TXD_CMD_RPS    0x10       /* Report Packet Sent */
+#define E1000_TXD_CMD_DEXT   0x20       /* Descriptor extension (0 = legacy) */
+#define E1000_TXD_CMD_VLE    0x40       /* Add VLAN tag */
+#define E1000_TXD_CMD_IDE    0x80       /* Enable Tidv register */
+#define E1000_TXD_STAT_DD    0x01       /* Descriptor Done */
+#define E1000_TXD_STAT_EC    0x02       /* Excess Collisions */
+#define E1000_TXD_STAT_LC    0x04       /* Late Collisions */
+#define E1000_TXD_STAT_TU    0x08       /* Transmit underrun */
+#define E1000_TXD_CMD_TCP    0x01       /* TCP packet */
+#define E1000_TXD_CMD_IP     0x02       /* IP packet */
+#define E1000_TXD_CMD_TSE    0x04       /* TCP Seg enable */
+#define E1000_TXD_STAT_TC    0x00       /* Tx Underrun */
 
  /* Transmit Control */
 #define E1000_TCTL_RST    0x00000001    /* software reset */
@@ -236,19 +236,21 @@
 #define E1000_TCTL_MULR   0x10000000    /* Multiple request support */
 
 #define TXRING_LEN 64
+#define MAX_PKT_SIZE 1518
 
  /* Transmit Descriptor */
 struct e1000_tx_desc
 {
-	uint64_t addr;
-	uint16_t length;
-	uint8_t cso;
-	uint8_t cmd;
-	uint8_t status;
-	uint8_t css;
+	uint64_t addr;		/* Address of the descriptor's data buffer */
+	uint16_t length;	/* Data buffer length */
+	uint8_t cso;		/* Checksum offset */
+	uint8_t cmd;		/* Descriptor control */
+	uint8_t status;		/* Descriptor status */
+	uint8_t css;		/* Checksum start */
 	uint16_t special;
 };
 
 int pci_e1000_attach(struct pci_func* pcif);
+int e1000_transmit(void* addr, size_t len);
 
 #endif  // SOL >= 6
