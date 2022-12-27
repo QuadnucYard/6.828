@@ -200,7 +200,112 @@
 #define E1000_FFMT     0x09000  /* Flexible Filter Mask Table - RW Array */
 #define E1000_FFVT     0x09800  /* Flexible Filter Value Table - RW Array */
 
-/* Transmit Descriptor bit definitions */
+ /* Interrupt Cause Read */
+#define E1000_ICR_TXDW          0x00000001 /* Transmit desc written back */
+#define E1000_ICR_TXQE          0x00000002 /* Transmit Queue empty */
+#define E1000_ICR_LSC           0x00000004 /* Link Status Change */
+#define E1000_ICR_RXSEQ         0x00000008 /* rx sequence error */
+#define E1000_ICR_RXDMT0        0x00000010 /* rx desc min. threshold (0) */
+#define E1000_ICR_RXO           0x00000040 /* rx overrun */
+#define E1000_ICR_RXT0          0x00000080 /* rx timer intr (ring 0) */
+#define E1000_ICR_MDAC          0x00000200 /* MDIO access complete */
+#define E1000_ICR_RXCFG         0x00000400 /* RX /c/ ordered set */
+#define E1000_ICR_GPI_EN0       0x00000800 /* GP Int 0 */
+#define E1000_ICR_GPI_EN1       0x00001000 /* GP Int 1 */
+#define E1000_ICR_GPI_EN2       0x00002000 /* GP Int 2 */
+#define E1000_ICR_GPI_EN3       0x00004000 /* GP Int 3 */
+#define E1000_ICR_TXD_LOW       0x00008000
+#define E1000_ICR_SRPD          0x00010000
+#define E1000_ICR_ACK           0x00020000 /* Receive Ack frame */
+#define E1000_ICR_MNG           0x00040000 /* Manageability event */
+#define E1000_ICR_DOCK          0x00080000 /* Dock/Undock */
+#define E1000_ICR_INT_ASSERTED  0x80000000 /* If this bit asserted, the driver should claim the interrupt */
+#define E1000_ICR_RXD_FIFO_PAR0 0x00100000 /* queue 0 Rx descriptor FIFO parity error */
+#define E1000_ICR_TXD_FIFO_PAR0 0x00200000 /* queue 0 Tx descriptor FIFO parity error */
+#define E1000_ICR_HOST_ARB_PAR  0x00400000 /* host arb read buffer parity error */
+#define E1000_ICR_PB_PAR        0x00800000 /* packet buffer parity error */
+#define E1000_ICR_RXD_FIFO_PAR1 0x01000000 /* queue 1 Rx descriptor FIFO parity error */
+#define E1000_ICR_TXD_FIFO_PAR1 0x02000000 /* queue 1 Tx descriptor FIFO parity error */
+#define E1000_ICR_ALL_PARITY    0x03F00000 /* all parity error bits */
+#define E1000_ICR_DSW           0x00000020 /* FW changed the status of DISSW bit in the FWSM */
+#define E1000_ICR_PHYINT        0x00001000 /* LAN connected device generates an interrupt */
+#define E1000_ICR_EPRST         0x00100000 /* ME handware reset occurs */
+
+/* Interrupt Mask Set */
+#define E1000_IMS_TXDW      E1000_ICR_TXDW      /* Transmit desc written back */
+#define E1000_IMS_TXQE      E1000_ICR_TXQE      /* Transmit Queue empty */
+#define E1000_IMS_LSC       E1000_ICR_LSC       /* Link Status Change */
+#define E1000_IMS_RXSEQ     E1000_ICR_RXSEQ     /* rx sequence error */
+#define E1000_IMS_RXDMT0    E1000_ICR_RXDMT0    /* rx desc min. threshold */
+#define E1000_IMS_RXO       E1000_ICR_RXO       /* rx overrun */
+#define E1000_IMS_RXT0      E1000_ICR_RXT0      /* rx timer intr */
+#define E1000_IMS_MDAC      E1000_ICR_MDAC      /* MDIO access complete */
+#define E1000_IMS_RXCFG     E1000_ICR_RXCFG     /* RX /c/ ordered set */
+#define E1000_IMS_GPI_EN0   E1000_ICR_GPI_EN0   /* GP Int 0 */
+#define E1000_IMS_GPI_EN1   E1000_ICR_GPI_EN1   /* GP Int 1 */
+#define E1000_IMS_GPI_EN2   E1000_ICR_GPI_EN2   /* GP Int 2 */
+#define E1000_IMS_GPI_EN3   E1000_ICR_GPI_EN3   /* GP Int 3 */
+#define E1000_IMS_TXD_LOW   E1000_ICR_TXD_LOW
+#define E1000_IMS_SRPD      E1000_ICR_SRPD
+#define E1000_IMS_ACK       E1000_ICR_ACK       /* Receive Ack frame */
+#define E1000_IMS_MNG       E1000_ICR_MNG       /* Manageability event */
+#define E1000_IMS_DOCK      E1000_ICR_DOCK      /* Dock/Undock */
+#define E1000_IMS_RXD_FIFO_PAR0 E1000_ICR_RXD_FIFO_PAR0 /* queue 0 Rx descriptor FIFO parity error */
+#define E1000_IMS_TXD_FIFO_PAR0 E1000_ICR_TXD_FIFO_PAR0 /* queue 0 Tx descriptor FIFO parity error */
+#define E1000_IMS_HOST_ARB_PAR  E1000_ICR_HOST_ARB_PAR  /* host arb read buffer parity error */
+#define E1000_IMS_PB_PAR        E1000_ICR_PB_PAR        /* packet buffer parity error */
+#define E1000_IMS_RXD_FIFO_PAR1 E1000_ICR_RXD_FIFO_PAR1 /* queue 1 Rx descriptor FIFO parity error */
+#define E1000_IMS_TXD_FIFO_PAR1 E1000_ICR_TXD_FIFO_PAR1 /* queue 1 Tx descriptor FIFO parity error */
+#define E1000_IMS_DSW       E1000_ICR_DSW
+#define E1000_IMS_PHYINT    E1000_ICR_PHYINT
+#define E1000_IMS_EPRST     E1000_ICR_EPRST
+
+/* Receive Control */
+#define E1000_RCTL_RST            0x00000001    /* Software reset */
+#define E1000_RCTL_EN             0x00000002    /* enable */
+#define E1000_RCTL_SBP            0x00000004    /* store bad packet */
+#define E1000_RCTL_UPE            0x00000008    /* unicast promiscuous enable */
+#define E1000_RCTL_MPE            0x00000010    /* multicast promiscuous enab */
+#define E1000_RCTL_LPE            0x00000020    /* long packet enable */
+#define E1000_RCTL_LBM_NO         0x00000000    /* no loopback mode */
+#define E1000_RCTL_LBM_MAC        0x00000040    /* MAC loopback mode */
+#define E1000_RCTL_LBM_SLP        0x00000080    /* serial link loopback mode */
+#define E1000_RCTL_LBM_TCVR       0x000000C0    /* tcvr loopback mode */
+#define E1000_RCTL_DTYP_MASK      0x00000C00    /* Descriptor type mask */
+#define E1000_RCTL_DTYP_PS        0x00000400    /* Packet Split descriptor */
+#define E1000_RCTL_RDMTS_HALF     0x00000000    /* rx desc min threshold size */
+#define E1000_RCTL_RDMTS_QUAT     0x00000100    /* rx desc min threshold size */
+#define E1000_RCTL_RDMTS_EIGTH    0x00000200    /* rx desc min threshold size */
+#define E1000_RCTL_MO_SHIFT       12            /* multicast offset shift */
+#define E1000_RCTL_MO_0           0x00000000    /* multicast offset 11:0 */
+#define E1000_RCTL_MO_1           0x00001000    /* multicast offset 12:1 */
+#define E1000_RCTL_MO_2           0x00002000    /* multicast offset 13:2 */
+#define E1000_RCTL_MO_3           0x00003000    /* multicast offset 15:4 */
+#define E1000_RCTL_MDR            0x00004000    /* multicast desc ring 0 */
+#define E1000_RCTL_BAM            0x00008000    /* broadcast enable */
+/* these buffer sizes are valid if E1000_RCTL_BSEX is 0 */
+#define E1000_RCTL_SZ_2048        0x00000000    /* rx buffer size 2048 */
+#define E1000_RCTL_SZ_1024        0x00010000    /* rx buffer size 1024 */
+#define E1000_RCTL_SZ_512         0x00020000    /* rx buffer size 512 */
+#define E1000_RCTL_SZ_256         0x00030000    /* rx buffer size 256 */
+/* these buffer sizes are valid if E1000_RCTL_BSEX is 1 */
+#define E1000_RCTL_SZ_16384       0x00010000    /* rx buffer size 16384 */
+#define E1000_RCTL_SZ_8192        0x00020000    /* rx buffer size 8192 */
+#define E1000_RCTL_SZ_4096        0x00030000    /* rx buffer size 4096 */
+#define E1000_RCTL_VFE            0x00040000    /* vlan filter enable */
+#define E1000_RCTL_CFIEN          0x00080000    /* canonical form enable */
+#define E1000_RCTL_CFI            0x00100000    /* canonical form indicator */
+#define E1000_RCTL_DPF            0x00400000    /* discard pause frames */
+#define E1000_RCTL_PMCF           0x00800000    /* pass MAC control frames */
+#define E1000_RCTL_BSEX           0x02000000    /* Buffer size extension */
+#define E1000_RCTL_SECRC          0x04000000    /* Strip Ethernet CRC */
+#define E1000_RCTL_FLXBUF_MASK    0x78000000    /* Flexible buffer size */
+#define E1000_RCTL_FLXBUF_SHIFT   27            /* Flexible buffer shift */
+
+/* Receive Address */
+#define E1000_RAH_AV  0x80000000        /* Receive descriptor valid */
+
+ /* Transmit Descriptor bit definitions */
 #define E1000_TXD_DTYP_D     0x00100000 /* Data Descriptor */
 #define E1000_TXD_DTYP_C     0x00000000 /* Context Descriptor */
 #define E1000_TXD_POPTS_IXSM 0x01       /* Insert IP checksum */
@@ -236,17 +341,28 @@
 #define E1000_TCTL_MULR   0x10000000    /* Multiple request support */
 
 #define TXRING_LEN 64
+#define RXRING_LEN 128
 #define MAX_PKT_SIZE 1518
+#define MAX_BUF_SIZE 2048
 
  /* Transmit Descriptor */
-struct e1000_tx_desc
-{
+struct e1000_tx_desc {
 	uint64_t addr;		/* Address of the descriptor's data buffer */
 	uint16_t length;	/* Data buffer length */
 	uint8_t cso;		/* Checksum offset */
 	uint8_t cmd;		/* Descriptor control */
 	uint8_t status;		/* Descriptor status */
 	uint8_t css;		/* Checksum start */
+	uint16_t special;
+};
+
+/* Receive Descriptor */
+struct e1000_rx_desc {
+	uint64_t addr;       /* Address of the descriptor's data buffer */
+	uint16_t length;     /* Length of data DMAed into data buffer */
+	uint16_t csum;       /* Packet checksum */
+	uint8_t status;      /* Descriptor status */
+	uint8_t errors;      /* Descriptor Errors */
 	uint16_t special;
 };
 
