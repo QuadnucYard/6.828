@@ -33,6 +33,7 @@ USERAPPS :=		$(USERAPPS) \
 			$(OBJDIR)/user/faultio \
 			$(OBJDIR)/user/mkdir \
 			$(OBJDIR)/user/touch \
+			$(OBJDIR)/user/clear \
 			$(OBJDIR)/user/idle \
 
 FSIMGTXTFILES :=	$(FSIMGTXTFILES) \
